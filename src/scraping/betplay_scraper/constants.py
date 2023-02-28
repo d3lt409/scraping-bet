@@ -10,7 +10,7 @@ DTYPE_COLUMNS = {"id_evento":int,"marcador1":int, "marcador2":int, "set1_marcado
 
 BUTTON_GAMES = "//div[contains(@class,'CollapsibleContainer__CollapsibleWrapper-sc-14bpk80-0 gOgibc KambiBC-betty-collapsible KambiBC-collapsible-container KambiBC-mod-event-group-container')][descendant::span[text()='En vivo']]"
 XPATH_GAMES = "//div[contains(@class,'CollapsibleContainer__CollapsibleWrapper-sc-14bpk80-0 gOgibc KambiBC-betty-collapsible KambiBC-collapsible-container KambiBC-mod-event-group-container')][1]//ul[@class='KambiBC-list-view__column KambiBC-list-view__event-list']//a"
-XPATH_GAME_OFFERS = "p[@class='KambiBC-bet-offer-categories__no-betoffers-msg']"
+XPATH_GAME_OFFERS = "//p[@class='KambiBC-bet-offer-categories__no-betoffers-msg']"
 
 XPATH_POINT_ITEM = "//li[@data-label='Point']"
 XPATH_SET_ITEM = "//li[@data-label='Set']"

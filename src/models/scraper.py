@@ -113,4 +113,5 @@ class Scraper():
     
     def close(self):
         self._driver.close()
-        self.db.close()
+        if hasattr(self,'db'):
+            self.db.close()

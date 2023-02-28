@@ -1,9 +1,11 @@
+import os
 import pandas as pd
 from sqlalchemy import create_engine,text
 from sqlalchemy.exc import OperationalError
 from datetime import datetime
 import time
 
+if 'db' not in os.listdir(): os.mkdir('db')
 CONNECTION_URI = "sqlite:///db/Apuestas.sqlite"
 CLICK = "arguments[0].click();"
 
