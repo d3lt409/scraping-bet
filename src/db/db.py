@@ -1,50 +1,67 @@
 import os
 import pandas as pd
-from sqlalchemy import create_engine,text
-from sqlalchemy.exc import OperationalError
-from datetime import datetime
-import time
+from sqlalchemy import text, Column, Integer, String,  Numeric, DateTime, UniqueConstraint
+from sqlalchemy.orm import declarative_base, DeclarativeBase, Session
+import contextlib
 
-if 'db' not in os.listdir(): os.mkdir('db')
-CONNECTION_URI = "sqlite:///db/Apuestas.sqlite"
-CLICK = "arguments[0].click();"
+if 'db' not in os.listdir():
+    os.mkdir('db')
+Base: DeclarativeBase = declarative_base()
 
-class DataBase():
+
+class DataBase(Base):
     """Genera un objeto de la base de datos
     """
-    def __init__(self,name_data_base:str) -> None:
-        self.engine = create_engine(CONNECTION_URI, echo = False)
-        self.name_data_base = name_data_base
+    __tablename__ = "betplay"
+    id = Column(Integer, primary_key=True)
+    id_evento = Column(Integer)
+    nombre_evento = Column(Integer)
+    jugador1 = Column(String)
+    jugador2 = Column(String)
+    marcador1 = Column(String)
+    marcador2 = Column(String)
+    servicio = Column(String)
+    set1_marcador = Column(String)
+    set2_marcador = Column(String)
+    punto1 = Column(Numeric)
+    punto2 = Column(Numeric)
+    juego1 = Column(Numeric)
+    juego2 = Column(Numeric)
+    set1 = Column(Numeric)
+    set2 = Column(Numeric)
+    partido1 = Column(Numeric)
+    partido2 = Column(Numeric)
+    timestamp = Column(DateTime)
+    __table_args__ = (UniqueConstraint(
+        'id_evento', 'nombre_evento', 'jugador1','jugador2','marcador1','marcador2','set1_marcador','set2_marcador',
+            'punto1','punto2','juego1','juego2','set1','set2','partido1','partido2',
+        name='_betplay_unique_'),
+    )
 
-        
-    def to_data_base(self,data:pd.DataFrame):
-        while True:
-            try:
-                data.to_sql(self.name_data_base,self.engine, if_exists='append', index=False)
-                break
-            except OperationalError:
-                print("Por favor guarde cambios en la base de datos")
-                time.sleep(5)
-                continue
+    @contextlib.contextmanager
+    @staticmethod
+    def get_session(engine, cleanup=False):
+        session = Session(bind=engine)
+        Base.metadata.create_all(engine)
 
-    def consulta_sql(self,sql:str):
-        with self.engine.connect() as conn:
-            return conn.execute(text(sql)).fetchall()
-    
+        try:
+            yield session
+        except Exception:
+            session.rollback()
+        finally:
+            session.close()
 
-    def consulta_sql_unica(self,sql:str):
-        with self.engine.connect() as conn:
-            res = conn.execute(text(sql)).first()
-            if res: return res
-            return None 
-        
-    def last_item_db(self):
-        date = datetime.now().strftime("%Y-%m-%d")
-        res = self.consulta_sql_unica(f"""select Departamento,Categoria,Sub_categoria from {self.name_data_base} 
-                where Fecha_resultados = {date!r} AND id = (select max(id) from {self.name_data_base});""")
-        if res:
-            res = dict(res)
-        return res
-    
-    def close(self):
-        self.engine.dispose()
+        if cleanup:
+            Base.metadata.drop_all(engine)
+
+    @contextlib.contextmanager
+    @staticmethod
+    def get_conn(engine, cleanup=False):
+        conn = engine.connect()
+        Base.metadata.create_all(engine)
+
+        yield conn
+        conn.close()
+
+        if cleanup:
+            Base.metadata.drop_all(engine)

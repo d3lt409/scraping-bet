@@ -20,14 +20,12 @@ from utils.util import internet_on
 
 class Scraper():
 
-    def __init__(self, page_url:str, name_database:str=None,headless:bool = False) -> None:
+    def __init__(self, page_url:str, headless:bool = False) -> None:
         self.headless = headless
         self._driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()) 
                               ,options=self.get_options(self.headless))                     # Define the driver we are using
         self._current_url = page_url
         self.init_page()
-        if name_database:
-            self.db = DataBase(name_database)
 
     
     def _get_driver(self):
@@ -113,5 +111,3 @@ class Scraper():
     
     def close(self):
         self._driver.close()
-        if hasattr(self,'db'):
-            self.db.close()
