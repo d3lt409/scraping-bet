@@ -13,7 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from models.scraper import Scraper
 from scraping.betplay_scraper.constants import *
 from models.scraper import DataBase
-from functools import partial
+from functools import partial, reduce
 
 engine_scraper = Scraper(PAGE_URL)
 links = []
@@ -22,12 +22,13 @@ links_done = []
 def get_links_games():
     global links, links_done
     try:
-        time.sleep(2)
         engine_scraper.element_wait_searh(TIME, By.XPATH, BUTTON_GAMES).click()
         links = links + \
             [val.get_attribute("href") for val in engine_scraper.elements_wait_searh(
                 TIME, By.XPATH, XPATH_GAMES)]
         if len(links_done) == 0:
+            with open("src/assets/links.txt", "w") as fp:
+                fp.writelines(map(lambda x: f"{x}\n", links))
             return
         print(links, links_done)
         for i in range(len(links)):
@@ -130,17 +131,22 @@ def read_links(link: str, engine:Engine):
 def main(engine:Engine):
     global links
 
-    pool = ThreadPool(3)
-
+    pool = ThreadPool(5)
+    response = []
     get_links_games()
-    timeout = time.time() + 120
+    timeout = time.time() + 60*24*24
     while time.time() <= timeout:
         if len(links) != 0:
             link = links.pop()
-            pool.map_async(partial(read_links,engine=engine), (link,)).get()
+            # pool.map_async(partial(read_links,engine=engine), (link,))
+            response.append(pool.apply_async(read_links,(link,engine)))
+            links_done.append(link)
         else:
+            for res in response: pool.apply_async(res.get)
+            response = []
             time.sleep(5)
             engine_scraper.driver.get(PAGE_URL)
+            time.sleep(5)
             pool.map_async(get_links_games,()).get()
 
     pool.close()
