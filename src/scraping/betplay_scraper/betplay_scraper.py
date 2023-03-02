@@ -122,8 +122,8 @@ def read_links(link: str, engine:Engine):
             print("entra")
             continue
         except TimeoutException as e:
-            exp = sys.exc_info()
-            traceback.print_exception(*exp)
+            # exp = sys.exc_info()
+            # traceback.print_exception(*exp)
             time.sleep(10)
 
 
