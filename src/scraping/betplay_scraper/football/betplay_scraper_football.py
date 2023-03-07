@@ -98,7 +98,7 @@ def read_links(link: str, engine:Engine):
             scraper.close()
             break
         except StaleElementReferenceException:
-            print("entra")
+            print("Stale")
             continue
         except TimeoutException as e:
             # exp = sys.exc_info()
