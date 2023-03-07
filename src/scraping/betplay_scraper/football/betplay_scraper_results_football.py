@@ -10,7 +10,7 @@ XPATH_PAISES_TAG = "//a[@class='list-group-item'][descendant::text()='{0}']"
 URL_PAIS = "https://s5.sir.sportradar.com/betplay/es/1/category/{0}"
 
 
-def get_country_id(engine):
+def get_categoria_id(engine):
     with get_session(engine) as se:
         res = se.query(Football.nombre_evento).where(
             or_(Football.resultado1 == None, Football.resultado2 == None)).all()
