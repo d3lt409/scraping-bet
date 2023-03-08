@@ -11,8 +11,8 @@ from sqlalchemy.exc import IntegrityError
 
 
 from models.scraper import Scraper
-from scraping.betplay_scraper.constants import *
-from models.scraper import DataBase
+from scraping.betplay_scraper.tennis.constants import *
+
 from functools import partial, reduce
 
 engine_scraper = Scraper(PAGE_URL)
