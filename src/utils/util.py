@@ -1,5 +1,6 @@
 import gc
-import time
+import time,re
+from unicodedata import normalize
 import os
 from datetime import datetime
 import sys
@@ -298,3 +299,17 @@ def internet_on():
     except Exception as e:
         return False
 
+
+
+def normlize_all(value:str):
+
+    # -> NFD y eliminar diacríticos
+    value = re.sub(
+            "([^n\u0300-\u036f]|n(?!\u0303(?![\u0300-\u036f])))[\u0300-\u036f]+", "\1", 
+            normalize( "NFD", value), 0, re.I
+        )
+
+    # -> NFC
+    value = normalize( 'NFC', value)
+
+    return value.lower()

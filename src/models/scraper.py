@@ -14,7 +14,6 @@ from selenium.webdriver.remote.webelement import WebElement
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 
-from db.db import DataBase
 from utils.util import internet_on
 
 
@@ -96,6 +95,11 @@ class Scraper():
                               ,options=self.get_options(self.headless)) 
         self.init_page()
         self.ready_document()
+    
+    def element_wait_lambda_return(self,time:int, element, script):
+        values = self.driver.execute_script(script, element)
+        date, hour = values.split()[0:2]
+        return date.replace('T00:00:00.000Z', f" {hour[0:9]}")
 
     def element_wait_searh(self, time:int, by, value:str) -> WebElement:
         return WebDriverWait(self._driver, time).until(EC.presence_of_element_located((by, value)))

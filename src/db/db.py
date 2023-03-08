@@ -63,7 +63,6 @@ class Tenis(Base):
     )
 
 
-
 class Football(Base):
     """
         Genera un objeto de la base de datos
@@ -72,7 +71,6 @@ class Football(Base):
     id = Column(Integer, primary_key=True)
     id_evento = Column(Integer)
     nombre_evento = Column(String)
-    categoria = Column(String)
     jugador1 = Column(String)
     jugador2 = Column(String)
     final_partido1 = Column(Numeric)
@@ -94,11 +92,12 @@ class Football(Base):
     resultado1 = Column(Integer)
     resultado2 = Column(Integer)
     timestamp = Column(DateTime)
+    
     __table_args__ = (UniqueConstraint(
         'id_evento', 'nombre_evento', 'jugador1','jugador2',
-        exec(",".join([f'total_goles_mas{num}' for num in MAS_MENOS])),
-        exec(",".join([f'total_goles_menos{num}' for num in MAS_MENOS])),
+        *eval(",".join([f"'total_goles_mas{num}'" for num in MAS_MENOS])),
+        *eval(",".join([f"'total_goles_menos{num}'" for num in MAS_MENOS])),
         'final_partido1','final_partido_empate','final_partido2','total_goles_mas25','doble_oportunidad1x','doble_oportunidad12','doble_oportunidadx2','ambos_marcan_si','ambos_marcan_no',
-        exec(",".join([f'resultado_{num}' for num in RESULTADOS])), 'sin_empate1','sin_empate2','fecha_juego',
+        *eval(",".join([f"'resultado_{num}'" for num in RESULTADOS])), 'sin_empate1','sin_empate2','fecha_juego',
         name='_betplay_unique_football'),
     )
