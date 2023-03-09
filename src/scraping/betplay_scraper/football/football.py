@@ -22,10 +22,12 @@ script_date = '''
 '''
 #text = WebDriverWait(driver, 20).until(lambda driver: driver.execute_script(f'return {script}'))
 def get_links_games():
-    global links, links_done
-    if engine_scraper.driver.current_url != PAGE_URL: 
-        engine_scraper.driver.get(PAGE_URL)
-        time.sleep(3)
+    global links, links_done, engine_scraper
+    while engine_scraper.driver.current_url != PAGE_URL: 
+        engine_scraper.close()
+        engine_scraper = Scraper(PAGE_URL)
+        time.sleep(5)
+    time.sleep(3)
     try:
         engine_scraper.element_wait_searh(TIME, By.XPATH, XPATH_BUTTON_FOOTBALL).click()
         engine_scraper.element_wait_searh(TIME, By.XPATH, XPATH_DROPDOWN_SORT).click()
@@ -63,12 +65,14 @@ def read_links(link: str, engine:Engine):
         traceback.print_exception(*exp)
         scraper.close()
         return 
-    time.sleep(2)
-    time_elemnt = scraper.element_wait_searh(By.XPATH, XPATH_START_GAME)
-    date_game = scraper.element_wait_lambda_return(TIME,int(time_elemnt.get_attribute("datetime")),script_date)
+    time.sleep(3)
+    time_elemnt = scraper.element_wait_searh(TIME,By.XPATH, XPATH_START_GAME)
+    date_game = scraper.element_wait_lambda_return(int(time_elemnt.get_attribute("datetime")),script_date)
     date_game = datetime.fromisoformat(date_game)
     try:
-        for element in scraper.elements_wait_searh(3,By.XPATH, XPATH_BUTTON_ALL_OFFERS): element.click()
+        for element in scraper.elements_wait_searh(3,By.XPATH, XPATH_BUTTON_ALL_OFFERS): 
+            element.click()
+            time.sleep(1)
     except TimeoutException: pass
     while True:
         try:
@@ -78,28 +82,54 @@ def read_links(link: str, engine:Engine):
             resultados = {}
             mas_menos = {}
             if len(apuestas) > 4:
-                final, total_mas_menos, doble, ambos_marcan, resultados_elements, sin_empate = apuestas[0:6]
-                
+                final=total_mas_menos=doble=ambos_marcan=resultados_elements=sin_empate = None
+                for ap in apuestas:
+                    if final and total_mas_menos and doble and ambos_marcan and resultados_elements and sin_empate: break
+                    if ap.text.startswith("Final del partido"): final = ap
+                    elif ap.text.startswith("Total de goles"): total_mas_menos = ap
+                    elif ap.text.startswith("Doble Oportunidad"): doble = ap
+                    elif ap.text.startswith("Ambos Equipos"): ambos_marcan = ap
+                    elif ap.text.startswith("Resultado Correcto"): resultados_elements = ap
+                    elif ap.text.startswith("Apuesta sin empate"): sin_empate = ap
                 for el in total_mas_menos.find_elements(By.XPATH, XPATH_RESULT_GAME):
-                    tipo,valor, apuesta = el.text.replace(" de","").split("\n")
-                    if float(valor) > 5.5: continue
-                    mas_menos[f"total_goles_{tipo.replace('á','a').lower()}{valor.replace('.','')}"] = apuesta
+                    dato = el.text.replace(" de","").split("\n")
+                    if float(dato[1]) > 5.5: continue
+                    if len(dato) == 3:
+                        tipo, valor, apuesta = dato
+                        mas_menos[f"total_goles_{tipo.replace('á','a').lower()}{valor.replace('.','')}"] = apuesta
+                    else: 
+                        tipo, valor = dato
+                        mas_menos[f"total_goles_{tipo.replace('á','a').lower()}{valor.replace('.','')}"] = None
                 
                 for el in resultados_elements.find_elements(By.XPATH, XPATH_RESULT_GAME):
-                    resultado, apuesta = el.text.split("\n")
-                    init, end = resultado.split("-")
-                    if int(init) > 5 or int(end) > 5: continue
-                    resultados[f"resultado_{init}_{end}"] = apuesta
-                
+                    dato = el.text.split("\n")
+                    if len(dato) > 1:
+                        init, end = dato[0].split("-")
+                        if int(init) > 5 or int(end) > 5: continue
+                        resultados[f"resultado_{init}_{end}"] = dato[1]
+                    else:
+                        init, end = dato[0].split("-")
+                        if int(init) > 5 or int(end) > 5: continue
+                        resultados[f"resultado_{init}_{end}"] = None
+                print([val.text for val in final.find_elements(By.XPATH, XPATH_GAME_PRICE)])
                 final1, final_empate, final2 = [val.text for val in final.find_elements(By.XPATH, XPATH_GAME_PRICE)]
                 doble1, doble12, doble2 = [val.text for val in doble.find_elements(By.XPATH, XPATH_GAME_PRICE)]
-                ambos_si, ambos_no = [val.text for val in ambos_marcan.find_elements(By.XPATH, XPATH_GAME_PRICE)]
+                try:
+                    ambos_si, ambos_no = [val.text for val in ambos_marcan.find_elements(By.XPATH, XPATH_GAME_PRICE)]
+                except AttributeError: 
+                    ambos_si = ambos_no = None
                 sin_empate1, sin_empate2 = [val.text for val in sin_empate.find_elements(By.XPATH, XPATH_GAME_PRICE)]
             else:
                 final, total_mas_menos, doble, sin_empate = apuestas
                 for el in total_mas_menos.find_elements(By.XPATH, XPATH_RESULT_GAME):
-                    tipo,valor, apuesta = el.text.replace(" de","").split("\n")
-                    mas_menos[f"total_goles_{tipo.replace('á','a').lower()}{valor.replace('.','')}"] = apuesta
+                    dato = el.text.replace(" de","").split("\n")
+                    if float(dato[1]) > 5.5: continue
+                    if len(dato) == 3:
+                        tipo, valor, apuesta = dato
+                        mas_menos[f"total_goles_{tipo.replace('á','a').lower()}{valor.replace('.','')}"] = apuesta
+                    else: 
+                        tipo, valor = dato
+                        mas_menos[f"total_goles_{tipo.replace('á','a').lower()}{valor.replace('.','')}"] = None
                 final1, final_empate, final2 = [val.text for val in final.find_elements(By.XPATH, XPATH_GAME_PRICE)]
                 doble1, doble12, doble2 = [val.text for val in doble.find_elements(By.XPATH, XPATH_GAME_PRICE)]
                 ambos_si, ambos_no = None,None
@@ -129,6 +159,9 @@ def read_links(link: str, engine:Engine):
             # exp = sys.exc_info()
             # traceback.print_exception(*exp)
             time.sleep(10)
+        except ValueError:
+            print("value")
+            continue
         except Exception:
             exp = sys.exc_info()
             traceback.print_exception(*exp)
@@ -140,7 +173,7 @@ def read_links(link: str, engine:Engine):
 def main(engine:Engine):
     global links, engine_scraper
     engine_scraper = Scraper(PAGE_URL)
-    pool = ThreadPool(6)
+    pool = ThreadPool(4)
     response = []
     get_links_games()
     timeout = time.time() + 60
@@ -151,7 +184,7 @@ def main(engine:Engine):
             response.append(pool.apply_async(read_links,(link,engine)))
             links_done.append(link)
         else:
-            for res in response: pool.apply_async(res.get)
+            for res in response: res.get()
             response = []
             time.sleep(120)
             engine_scraper.driver.get(PAGE_URL)
