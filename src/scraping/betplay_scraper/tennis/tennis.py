@@ -22,7 +22,13 @@ links_done = []
 def get_links_games():
     global links, links_done
     try:
+        
         engine_scraper.element_wait_searh(TIME, By.XPATH, BUTTON_GAMES).click()
+        time.sleep(1)
+        try:
+            for el in engine_scraper.elements_wait_searh(4, By.XPATH, XPATH_DROPDWN_LIST_GAMES): el.click()
+        except TimeoutException: pass
+        
         links = links + \
             [val.get_attribute("href") for val in engine_scraper.elements_wait_searh(
                 TIME, By.XPATH, XPATH_GAMES)]
@@ -38,6 +44,12 @@ def get_links_games():
     except Exception as e:
         print(e.with_traceback(e.__traceback__))
 
+def try_catch_elements(scraper:Scraper, time,value):
+    try:
+        return scraper.element_wait_searh(
+                time, By.XPATH, value)
+    except TimeoutException:
+        return None
 
 def read_links(link: str, engine:Engine):
     scraper = Scraper(link, NAME_DATA_BASE)
@@ -53,13 +65,19 @@ def read_links(link: str, engine:Engine):
     except Exception as e:
         exp = sys.exc_info()
         traceback.print_exception(*exp)
+        scraper.close()
         return data
     time.sleep(2)
+    tries = 0
     while True:
         try:
             scraper.element_wait_searh(2, By.XPATH, XPATH_GAME_OFFERS)
-            print("salio")
-            return
+            if tries >= 2: 
+                print(f"salio del partido {event_id}, {event_game}")
+                scraper.close()
+                return
+            tries+=1
+            time.sleep(20)
         except StaleElementReferenceException:
             scraper.driver.refresh()
             continue
@@ -69,17 +87,21 @@ def read_links(link: str, engine:Engine):
             exp = sys.exc_info()
             traceback.print_exception(*exp)
         try:
-            point_element = scraper.element_wait_searh(
-                10, By.XPATH, XPATH_POINT_ITEM)
-            set_element = scraper.element_wait_searh(
-                10, By.XPATH, XPATH_SET_ITEM)
-            game_element = scraper.element_wait_searh(
-                10, By.XPATH, XPATH_GAME_ITEM)
-            macth_element = scraper.element_wait_searh(
-                10, By.XPATH, XPATH_MATCH_ITEM)
+            
+            ser = {}
+            point_element = try_catch_elements(scraper, 3,XPATH_POINT_ITEM)
+            set_element = try_catch_elements(scraper, 3,XPATH_SET_ITEM)  
+            game_element = try_catch_elements(scraper, 3,XPATH_GAME_ITEM)   
+            macth_element = try_catch_elements(scraper, 3,XPATH_MATCH_ITEM) 
             elements = {"punto": point_element, "set": set_element,
                         "juego": game_element, "partido": macth_element}
-            ser = pd.Series(index=COLUMNS)
+            for name, element in elements.items():
+                if element:
+                    element.click()
+                    prices = scraper.elements_wait_searh(
+                        5, By.XPATH, XPATH_GAME_PRICE)
+                    ser.update({f"{name}{i+1}": float(val.text) for i,
+                            val in enumerate(prices)})
             score_name = scraper.elements_wait_searh(
                 5, By.XPATH, XPATH_SCORE_GAME_NAME)
             
@@ -104,22 +126,17 @@ def read_links(link: str, engine:Engine):
                 5, By.XPATH, XPATH_SET_VALUES)
             ser.update({f"set{i+1}_marcador": int(val.text) for i,
                        val in enumerate(sets)})
-            for name, element in elements.items():
-                element.click()
-                prices = scraper.elements_wait_searh(
-                    5, By.XPATH, XPATH_GAME_PRICE)
-                ser.update({f"{name}{i+1}": float(val.text) for i,
-                           val in enumerate(prices)})
+            
             ser.update({"timestamp": datetime.now()})
             
             with engine.connect() as conn:
                 try:
-                    ser.to_frame().T.to_sql('betplay',conn, index=False, if_exists='append')
+                    pd.DataFrame([ser]).to_sql('betplay_tenis',conn, index=False, if_exists='append')
                     conn.commit()
                 except IntegrityError:
                     pass
         except StaleElementReferenceException:
-            print("entra")
+            print("stale")
             continue
         except TimeoutException as e:
             # exp = sys.exc_info()
@@ -134,7 +151,7 @@ def main(engine:Engine):
     pool = ThreadPool(5)
     response = []
     get_links_games()
-    timeout = time.time() + 60*24*24
+    timeout = time.time() + 60
     while time.time() <= timeout:
         if len(links) != 0:
             link = links.pop()
@@ -147,7 +164,7 @@ def main(engine:Engine):
             time.sleep(5)
             engine_scraper.driver.get(PAGE_URL)
             time.sleep(5)
-            pool.map_async(get_links_games,()).get()
+            pool.apply(get_links_games,())
 
     pool.close()
     pool.join()

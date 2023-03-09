@@ -2,11 +2,15 @@ import os
 from sqlalchemy import text, Column, Integer, String,  Numeric, DateTime, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Session
 from db.constants import *
+from sqlalchemy import create_engine
 
 if 'db' not in os.listdir():
     os.mkdir('db')
  
 class Base(DeclarativeBase): pass
+
+def new_engine():
+    return create_engine(CONNECTION_URI, echo = False)
 
 def get_session(engine, cleanup=False):
     session = Session(bind=engine)

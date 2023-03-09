@@ -1,5 +1,6 @@
 
 PAGE_URL = "https://betplay.com.co/apuestas#filter/all/all/all/all/starting-soon"
+PAGE_URL_RESULTS = "https://www.flashscore.co/"
 NAME_DATA_BASE = "betplay_football"
 CONNECTION_URI = "sqlite:///db/Apuestas.sqlite"
 TIME = 15

@@ -4,6 +4,7 @@ from unicodedata import normalize
 import os
 from datetime import datetime
 import sys
+import unicodedata
 from urllib.request import urlopen
 from selenium import webdriver
 from selenium.webdriver.chrome.webdriver import WebDriver
@@ -313,3 +314,7 @@ def normlize_all(value:str):
     value = normalize( 'NFC', value)
 
     return value.lower()
+
+def elimina_tildes(cadena):
+    s = ''.join((c for c in unicodedata.normalize('NFD',cadena) if unicodedata.category(c) != 'Mn'))
+    return s

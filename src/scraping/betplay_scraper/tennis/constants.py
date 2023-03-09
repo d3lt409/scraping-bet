@@ -1,7 +1,6 @@
 
 PAGE_URL = "https://betplay.com.co/apuestas#filter/tennis"
 NAME_DATA_BASE = "betplay"
-CONNECTION_URI = "sqlite:///db/Apuestas.sqlite"
 TIME = 15
 
 COLUMNS = ["id_evento","nombre_evento","jugador1", "jugador2","marcador1","marcador2", "servicio",
@@ -12,6 +11,7 @@ DTYPE_COLUMNS = {"id_evento":int,"marcador1":int, "marcador2":int, "set1_marcado
                  "set2": float, "partido1": float, "partido2": float }
 
 BUTTON_GAMES = "//div[contains(@class,'CollapsibleContainer__CollapsibleWrapper-sc-14bpk80-0 gOgibc KambiBC-betty-collapsible KambiBC-collapsible-container KambiBC-mod-event-group-container')][descendant::span[text()='En vivo']]"
+XPATH_DROPDWN_LIST_GAMES = "//div[@class='CollapsibleContainer__CollapsibleWrapper-sc-14bpk80-0 kkAwUc KambiBC-betty-collapsible-container'][descendant::header[@class='CollapsibleContainer__HeaderWrapper-sc-14bpk80-1 hDaRiN']]"
 XPATH_GAMES = "//div[contains(@class,'CollapsibleContainer__CollapsibleWrapper-sc-14bpk80-0 gOgibc KambiBC-betty-collapsible KambiBC-collapsible-container KambiBC-mod-event-group-container')][1]//ul[@class='KambiBC-list-view__column KambiBC-list-view__event-list']//a"
 XPATH_GAME_OFFERS = "//p[@class='KambiBC-bet-offer-categories__no-betoffers-msg']"
 XPATH_GAME_WAIT = "div[@class='sr-lmt-0-ms-countdown__text sr-lmt-0-ms-countdown__title srt-text-secondary srm-is-uppercase']/span[text()='Partido a punto de comenzar']"

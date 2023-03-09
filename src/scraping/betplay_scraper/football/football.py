@@ -59,7 +59,7 @@ def read_links(link: str, engine:Engine):
         scraper.close()
         return 
     time.sleep(2)
-    time_elemnt = scraper.element_wait_searh(TIME,By.XPATH, XPATH_START_GAME)
+    time_elemnt = scraper.element_wait_searh(By.XPATH, XPATH_START_GAME)
     date_game = scraper.element_wait_lambda_return(TIME,int(time_elemnt.get_attribute("datetime")),script_date)
     date_game = datetime.fromisoformat(date_game)
     try:

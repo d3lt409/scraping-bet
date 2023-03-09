@@ -5,7 +5,7 @@ import sys
 
 from selenium import webdriver
 from selenium.webdriver.chrome.webdriver import WebDriver
-from selenium.common.exceptions import WebDriverException,InvalidSessionIdException
+from selenium.common.exceptions import WebDriverException,NoSuchElementException, TimeoutException
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -96,13 +96,13 @@ class Scraper():
         self.init_page()
         self.ready_document()
     
-    def element_wait_lambda_return(self,time:int, element, script):
+    def element_wait_lambda_return(self,element, script):
         values = self.driver.execute_script(script, element)
         date, hour = values.split()[0:2]
         return date.replace('T00:00:00.000Z', f" {hour[0:9]}")
 
     def element_wait_searh(self, time:int, by, value:str) -> WebElement:
-        return WebDriverWait(self._driver, time).until(EC.presence_of_element_located((by, value)))
+        return WebDriverWait(self._driver, time ).until(EC.presence_of_element_located((by, value)))
 
     def elements_wait_searh(self, time:int, by, value:str) -> list[WebElement]:
         return WebDriverWait(self._driver, time).until(EC.presence_of_all_elements_located((by, value)))

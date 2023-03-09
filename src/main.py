@@ -1,9 +1,8 @@
-from scraping.betplay_scraper.football.betplay_scraper_football import main
-from sqlalchemy import create_engine
-from scraping.betplay_scraper.constants import CONNECTION_URI
-from db.db import Base
+# from scraping.betplay_scraper.football.football import main
+# from scraping.betplay_scraper.tennis.tennis import main
+from scraping.betplay_scraper.football.results_football import main
+from db.db import Base, new_engine
 
-engine = create_engine(CONNECTION_URI, echo = False)
+engine = new_engine()
 Base.metadata.create_all(engine)
-
 main(engine)
