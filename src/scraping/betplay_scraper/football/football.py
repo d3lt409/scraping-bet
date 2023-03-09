@@ -35,8 +35,13 @@ def get_links_games():
             for el in engine_scraper.elements_wait_searh(4, By.XPATH, XPATH_DROPDOWN_LIST_HOURS): el.click()
             for el in engine_scraper.elements_wait_searh(4, By.XPATH, XPATH_DROPDWN_LIST_GAMES): el.click()
         except TimeoutException: pass
-        return [val.get_attribute("href") for val in engine_scraper.elements_wait_searh(
+        links = links + \
+            [val.get_attribute("href") for val in engine_scraper.elements_wait_searh(
                 TIME, By.XPATH, XPATH_GAMES)]
+        if len(links_done) == 0: return
+        for i in range(len(links)):
+            if links[i] in links_done:
+                del links[i]
 
     except Exception as e:
         exp = sys.exc_info()
@@ -135,13 +140,24 @@ def read_links(link: str, engine:Engine):
 def main(engine:Engine):
     global links
 
-    pool = ThreadPool(4)
-    links = get_links_games()
-    res = []
-    for link in links:
-        # pool.map_async(partial(read_links,engine=engine), (link,))
-        res.append(pool.apply_async(read_links,(link,engine)))
-    for r in res :r.get()
+    pool = ThreadPool(6)
+    response = []
+    get_links_games()
+    timeout = time.time() + 60
+    while time.time() <= timeout:
+        if len(links) != 0:
+            link = links.pop()
+            # pool.map_async(partial(read_links,engine=engine), (link,))
+            response.append(pool.apply_async(read_links,(link,engine)))
+            links_done.append(link)
+        else:
+            for res in response: pool.apply_async(res.get)
+            response = []
+            time.sleep(5)
+            engine_scraper.driver.get(PAGE_URL)
+            time.sleep(5)
+            pool.apply(get_links_games,())
+
     pool.close()
     pool.join()
 
