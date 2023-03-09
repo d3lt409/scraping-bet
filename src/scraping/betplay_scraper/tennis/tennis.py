@@ -15,7 +15,7 @@ from scraping.betplay_scraper.tennis.constants import *
 
 from functools import partial, reduce
 
-engine_scraper = Scraper(PAGE_URL)
+
 links = []
 links_done = []
 
@@ -146,8 +146,9 @@ def read_links(link: str, engine:Engine):
 
 
 def main(engine:Engine):
-    global links
+    global links, engine_scraper
 
+    engine_scraper = Scraper(PAGE_URL)
     pool = ThreadPool(5)
     response = []
     get_links_games()

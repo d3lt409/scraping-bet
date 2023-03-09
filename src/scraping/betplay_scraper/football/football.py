@@ -13,7 +13,7 @@ from functools import partial
 from models.scraper import Scraper
 from scraping.betplay_scraper.football.constants import *
 
-engine_scraper = Scraper(PAGE_URL)
+
 links = []
 links_done = []
 script_date = '''
@@ -138,8 +138,8 @@ def read_links(link: str, engine:Engine):
 
 
 def main(engine:Engine):
-    global links
-
+    global links, engine_scraper
+    engine_scraper = Scraper(PAGE_URL)
     pool = ThreadPool(6)
     response = []
     get_links_games()
@@ -153,7 +153,7 @@ def main(engine:Engine):
         else:
             for res in response: pool.apply_async(res.get)
             response = []
-            time.sleep(5)
+            time.sleep(120)
             engine_scraper.driver.get(PAGE_URL)
             time.sleep(5)
             pool.apply(get_links_games,())

@@ -13,7 +13,7 @@ from db.db import get_session, Football
 from models.scraper import Scraper
 from scraping.betplay_scraper.football.constants import *
 
-engine_scraper = Scraper(PAGE_URL_RESULTS)
+
 DICT_MODISM = {"sudamericana":"sudamerica", "europea":"europa","concacaf":"norte-centroamerica-y-caribe", "champions league":"europa", "copa libertadores":"sudamerica","concacaf":"norte centroamerica y caribe"}
 XPATH_GAMES_RESULTS = "//div[contains(@class,'event__match event__match--static')]"
 DELETE_TEXT_PLAYERS = ["Atlético","Deportivo","FC","Club","Academia","Atletico","de"]
@@ -30,6 +30,8 @@ def get_name(value:str):
     return re.sub("\W.+","", l[-1])
 
 def main(engine: Engine):
+    global engine_scraper
+    engine_scraper = Scraper(PAGE_URL_RESULTS)
     with get_session(engine) as s:
         players = s.query(Football.id, Football.nombre_evento, Football.jugador1, Football.jugador2).where(
             Football.resultado1 == None, Football.resultado2 == None).all()
