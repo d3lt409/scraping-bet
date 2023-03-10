@@ -185,7 +185,7 @@ def main(engine:Engine):
             response.append(pool.apply_async(read_links,(link,engine)))
             links_done.append(link)
         else:
-            for res in response: res.get()
+            for res in response: pool.map_async(res.get,())
             response = []
             time.sleep(120)
             engine_scraper.driver.get(PAGE_URL)
