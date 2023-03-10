@@ -68,7 +68,7 @@ def read_links(link: str, engine:Engine):
     time.sleep(3)
     time_elemnt = scraper.element_wait_searh(TIME,By.XPATH, XPATH_START_GAME)
     date_game = scraper.element_wait_lambda_return(int(time_elemnt.get_attribute("datetime")),script_date)
-    date_game = datetime.fromisoformat(date_game)
+    date_game = datetime.fromisoformat(date_game.replace(".000Z",""))
     try:
         for element in scraper.elements_wait_searh(3,By.XPATH, XPATH_BUTTON_ALL_OFFERS): 
             element.click()
@@ -111,7 +111,6 @@ def read_links(link: str, engine:Engine):
                         init, end = dato[0].split("-")
                         if int(init) > 5 or int(end) > 5: continue
                         resultados[f"resultado_{init}_{end}"] = None
-                print([val.text for val in final.find_elements(By.XPATH, XPATH_GAME_PRICE)])
                 final1, final_empate, final2 = [val.text for val in final.find_elements(By.XPATH, XPATH_GAME_PRICE)]
                 doble1, doble12, doble2 = [val.text for val in doble.find_elements(By.XPATH, XPATH_GAME_PRICE)]
                 try:
@@ -160,6 +159,8 @@ def read_links(link: str, engine:Engine):
             # traceback.print_exception(*exp)
             time.sleep(10)
         except ValueError:
+            if scraper.driver.current_url != link:
+                return
             print("value")
             continue
         except Exception:
