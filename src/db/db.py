@@ -37,6 +37,15 @@ def get_conn(engine, cleanup=False):
     if cleanup:
         Base.metadata.drop_all(engine)
 
+
+def row2dict(row):
+    d = {}
+    for column in row.__table__.columns:
+        if column.name in d:
+            d[column.name] = str(getattr(row, column.name))
+
+    return d
+
 class Tenis(Base):
     """Genera un objeto de la base de datos
     """
