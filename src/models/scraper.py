@@ -10,6 +10,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.common.action_chains import ActionChains
 
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
@@ -111,7 +112,9 @@ class Scraper():
         return WebDriverWait(self._driver, time).until(EC.element_to_be_clickable((by, value)))
     
     def click(self,element:WebElement):
-        self.driver.execute_script("arguments[0].click();", element)
+        self.driver.execute_script("arguments[0].scrollIntoView();", element)
+        time.sleep(1)
+        element.click()
     
     def close(self):
         self._driver.close()

@@ -4,6 +4,7 @@ import sys
 import pandas as pd
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
+
 from multiprocessing.pool import ThreadPool
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import Engine
@@ -28,14 +29,20 @@ def get_links_games():
         engine_scraper = Scraper(PAGE_URL)
         time.sleep(5)
     time.sleep(3)
+
     try:
-        engine_scraper.element_wait_searh(TIME, By.XPATH, XPATH_BUTTON_FOOTBALL).click()
-        engine_scraper.element_wait_searh(TIME, By.XPATH, XPATH_DROPDOWN_SORT).click()
-        engine_scraper.element_wait_searh(TIME, By.XPATH, XPATH_ITEM_HOUR).click()
-        time.sleep(2)
+        engine_scraper.element_click_wait_searh(TIME, By.XPATH, XPATH_BUTTON_FOOTBALL).click()
+        engine_scraper.element_click_wait_searh(TIME, By.XPATH, XPATH_DROPDOWN_SORT).click()
+        engine_scraper.element_click_wait_searh(TIME, By.XPATH, XPATH_ITEM_HOUR).click()
+        time.sleep(3)
         try:
-            for el in engine_scraper.elements_wait_searh(4, By.XPATH, XPATH_DROPDOWN_LIST_HOURS): el.click()
-            for el in engine_scraper.elements_wait_searh(4, By.XPATH, XPATH_DROPDWN_LIST_GAMES): el.click()
+            for el in engine_scraper.elements_wait_searh(4, By.XPATH, XPATH_DROPDOWN_LIST_HOURS): 
+                engine_scraper.click(el)
+        except TimeoutException: pass
+        time.sleep(3)
+        try:
+            for el in engine_scraper.elements_wait_searh(4, By.XPATH, XPATH_DROPDWN_LIST_GAMES): 
+                engine_scraper.click(el)
         except TimeoutException: pass
         links = links + \
             [val.get_attribute("href") for val in engine_scraper.elements_wait_searh(
@@ -159,9 +166,11 @@ def read_links(link: str, engine:Engine):
             # traceback.print_exception(*exp)
             time.sleep(10)
         except ValueError:
-            if scraper.driver.current_url != link:
+            if scraper.driver.current_url != link or date_game >= datetime.now():
                 return
-            print("value")
+            scraper.driver.refresh()
+            time.sleep(4)
+            scraper.driver.get(link)
             continue
         except Exception:
             exp = sys.exc_info()
@@ -189,7 +198,7 @@ def main(engine:Engine):
             response = []
             time.sleep(120)
             engine_scraper.driver.get(PAGE_URL)
-            time.sleep(5)
+            time.sleep(10)
             pool.apply(get_links_games,())
 
     pool.close()

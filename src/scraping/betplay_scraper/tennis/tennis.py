@@ -153,6 +153,7 @@ def main(engine:Engine):
     response = []
     get_links_games()
     timeout = time.time() + 60
+    links = links[0:1]
     while time.time() <= timeout:
         if len(links) != 0:
             link = links.pop()
@@ -161,11 +162,11 @@ def main(engine:Engine):
             links_done.append(link)
         else:
             for res in response: pool.apply_async(res.get)
-            response = []
-            time.sleep(5)
-            engine_scraper.driver.get(PAGE_URL)
-            time.sleep(5)
-            pool.apply(get_links_games,())
+            # response = []
+            # time.sleep(5)
+            # engine_scraper.driver.get(PAGE_URL)
+            # time.sleep(5)
+            # pool.apply(get_links_games,())
 
     pool.close()
     pool.join()
