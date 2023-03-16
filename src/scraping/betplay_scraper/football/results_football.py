@@ -19,7 +19,16 @@ DELETE_TEXT_PLAYERS = ["Atlético","Deportivo","Club","Academia","Atletico"]
 DELETE_TEXT_CATEGORIES = []
 PAGE_URL_GOOGLE = "https://www.google.com/search?q={0}+vs+{1}&oq={0}+vs+{1}"
 
-COUNTRIES_DIVS = {"argentina":{"reserves-leagues":"liga-profesional"}}
+COUNTRIES_DIVS = {"argentina":{"reserves-leagues":"liga-profesional","femenino-(f)":"primera-a-femenina"}, 
+                  "mexico":{"liga-premier":"liga-premier-serie-a"},
+                  "brasil":{
+                            "campeonato-brasileiro-sub20":"brasileirao-sub-20",
+                            "goiano":"campeonato-goiano",
+                            "gaucho":"campeonato-gaucho"
+                            },
+                  "francia":{"d1-femenina":"division-1-femenina"},
+                  "irlanda":{"1ª-division":"division-1"},
+                  "belgica":{"eerste-klasse-amateurs":"national-division-1"}}
 
 XPATH_GAMES_RESULTS_GOOGLE = "//div[@class='imso-ani imso_mh__tas']"
 XPATH_GAMES_RESULTS_GOOGLE_OTHER = "//div[@class='imso_mh__tm-a-sts']"
@@ -48,7 +57,7 @@ def main(engine: Engine):
             Football.resultado1 == None, Football.resultado2 == None, func.date(Football.fecha_juego) < datetime.utcnow().date()).all()
         for id, evento, j1, j2 in players:
             for text in DELETE_TEXT_PLAYERS: j1 = j1.replace(text, "").strip(); j2 = j2.replace(text, "").strip()
-            evento = elimina_tildes(evento).lower()
+            evento = elimina_tildes(evento).replace("-"," ").lower()
             cat_tipo:list[str] = [val.replace("betplay", "").strip() for val in evento.split("-")]
             if len(cat_tipo) == 1:
                 if cat_tipo[0] in DICT_MODISM: 
@@ -119,8 +128,9 @@ def get_result_google(engine, id, j1,j2):
         j1_names = j1.replace("-", " ").split()
         j2_names = j2.replace("-", " ").split()
         print(j1_names, j2_names, name1, name2)
+        game_text = elimina_tildes(game.text)
         for j in j1_names:
-            if j in game.text:
+            if j in game_text:
                 for k in j2_names:
                     if k in j2_names:
                         print(res, j1,j2)

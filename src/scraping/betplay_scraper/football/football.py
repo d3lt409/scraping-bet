@@ -23,7 +23,7 @@ script_date = '''
 '''
 #text = WebDriverWait(driver, 20).until(lambda driver: driver.execute_script(f'return {script}'))
 def get_links_games():
-    global links, links_done, engine_scraper
+    global links, engine_scraper
     while engine_scraper.driver.current_url != PAGE_URL: 
         engine_scraper.close()
         engine_scraper = Scraper(PAGE_URL)
@@ -44,13 +44,8 @@ def get_links_games():
             for el in engine_scraper.elements_wait_searh(4, By.XPATH, XPATH_DROPDWN_LIST_GAMES): 
                 engine_scraper.click(el)
         except TimeoutException: pass
-        links = links + \
-            [val.get_attribute("href") for val in engine_scraper.elements_wait_searh(
+        links = [val.get_attribute("href") for val in engine_scraper.elements_wait_searh(
                 TIME, By.XPATH, XPATH_GAMES)]
-        if len(links_done) == 0: return
-        for i in range(len(links)):
-            if links[i] in links_done:
-                del links[i]
 
     except Exception as e:
         exp = sys.exc_info()
@@ -62,7 +57,7 @@ def read_links(link: str, engine:Engine):
     event_id = link.split("/")[-1]
     with get_session(engine) as s:
         res = s.query(Football.id).where(Football.id_evento == event_id).first()
-        if not res:
+        if res:
             return
     scraper = Scraper(link, NAME_DATA_BASE)
     scraper.driver.implicitly_wait(1)    
@@ -170,12 +165,14 @@ def read_links(link: str, engine:Engine):
             # traceback.print_exception(*exp)
             time.sleep(10)
         except ValueError:
-            if tries > 10: return
-            if scraper.driver.current_url != link or date_game >= datetime.now():
+            if tries > 7: return
+            if scraper.driver.current_url != link or date_game <= datetime.now():
+                print("Sale value")
                 return
-            scraper.driver.refresh()
             time.sleep(60)
+            scraper.driver.refresh()
             scraper.driver.get(link)
+            tries+=1
             continue
         except Exception:
             exp = sys.exc_info()
@@ -197,14 +194,13 @@ def main(engine:Engine):
             link = links.pop()
             # pool.map_async(partial(read_links,engine=engine), (link,))
             response.append(pool.apply_async(read_links,(link,engine)))
-            links_done.append(link)
         else:
             for res in response: pool.map_async(res.get,())
             response = []
-            time.sleep(120)
-            engine_scraper.driver.get(PAGE_URL)
-            time.sleep(10)
-            pool.apply(get_links_games,())
+            time.sleep(60*30)
+            engine_scraper.close()
+            engine_scraper = Scraper(PAGE_URL)
+            pool.apply(get_links_games)
 
     pool.close()
     pool.join()
