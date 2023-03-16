@@ -1,6 +1,6 @@
 from scraping.betplay_scraper.football.football import main as main_football
 from scraping.betplay_scraper.tennis.tennis import main as main_tennis
-from scraping.betplay_scraper.football.results_football import main as main_results_football
+from scraping.betplay_scraper.football.results.results_football import main as main_results_football
 from db.db import Base, new_engine
 import click
 

@@ -2,37 +2,15 @@ import time
 import traceback
 import sys
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException, StaleElementReferenceException,UnexpectedAlertPresentException
-from multiprocessing.pool import ThreadPool
-from sqlalchemy import Engine, Date, cast, func
+from selenium.common.exceptions import TimeoutException, UnexpectedAlertPresentException
+from sqlalchemy import Engine, func
 from utils.util import elimina_tildes, re, datetime
 
 
-from db.db import get_session, Football, row2dict
+from db.db import get_session, Football
 from models.scraper import Scraper
-from scraping.betplay_scraper.football.constants import *
+from scraping.betplay_scraper.football.results.constanst import *
 
-
-DICT_MODISM = {"sudamericana":"sudamerica", "europea":"europa","concacaf":"norte-centroamerica-y-caribe", "champions league":"europa", "copa libertadores":"sudamerica","concacaf":"norte centroamerica y caribe"}
-XPATH_GAMES_RESULTS = "//div[contains(@class,'event__match event__match--static')]"
-DELETE_TEXT_PLAYERS = ["Atlético","Deportivo","Club","Academia","Atletico"]
-DELETE_TEXT_CATEGORIES = []
-PAGE_URL_GOOGLE = "https://www.google.com/search?q={0}+vs+{1}&oq={0}+vs+{1}"
-
-COUNTRIES_DIVS = {"argentina":{"reserves-leagues":"liga-profesional","femenino-(f)":"primera-a-femenina"}, 
-                  "mexico":{"liga-premier":"liga-premier-serie-a"},
-                  "brasil":{
-                            "campeonato-brasileiro-sub20":"brasileirao-sub-20",
-                            "goiano":"campeonato-goiano",
-                            "gaucho":"campeonato-gaucho"
-                            },
-                  "francia":{"d1-femenina":"division-1-femenina"},
-                  "irlanda":{"1ª-division":"division-1"},
-                  "belgica":{"eerste-klasse-amateurs":"national-division-1"}}
-
-XPATH_GAMES_RESULTS_GOOGLE = "//div[@class='imso-ani imso_mh__tas']"
-XPATH_GAMES_RESULTS_GOOGLE_OTHER = "//div[@class='imso_mh__tm-a-sts']"
-TIME = 5
 
 def get_name(value:str):
     l = value.replace(" de "," ").replace("  "," ").strip().split()
@@ -49,6 +27,12 @@ def save_results(engine, id , res1,res2):
         football.resultado2 = res2
         s.commit()
 
+def get_first_separator(value:str):
+    it = value.split("-")
+    if len(it) > 2:
+        return f"{it[0]}-{' '.join(it[1:])}"
+    return value
+
 def main(engine: Engine):
     global engine_scraper
     engine_scraper = Scraper(PAGE_URL_RESULTS)
@@ -57,7 +41,8 @@ def main(engine: Engine):
             Football.resultado1 == None, Football.resultado2 == None, func.date(Football.fecha_juego) < datetime.utcnow().date()).all()
         for id, evento, j1, j2 in players:
             for text in DELETE_TEXT_PLAYERS: j1 = j1.replace(text, "").strip(); j2 = j2.replace(text, "").strip()
-            evento = elimina_tildes(evento).replace("-"," ").lower()
+            evento = get_first_separator(elimina_tildes(evento).lower())
+            print(evento)
             cat_tipo:list[str] = [val.replace("betplay", "").strip() for val in evento.split("-")]
             if len(cat_tipo) == 1:
                 if cat_tipo[0] in DICT_MODISM: 
