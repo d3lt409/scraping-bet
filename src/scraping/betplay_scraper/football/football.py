@@ -81,6 +81,7 @@ def read_links(link: str, engine:Engine):
             element.click()
             time.sleep(1)
     except TimeoutException: pass
+    tries = 0
     while True:
         try:
             jugador1, jugador2 = scraper.element_wait_searh(TIME,By.XPATH,XPATH_NAME_PLAYER).text.split(' - ')
@@ -166,10 +167,11 @@ def read_links(link: str, engine:Engine):
             # traceback.print_exception(*exp)
             time.sleep(10)
         except ValueError:
+            if tries > 10: return
             if scraper.driver.current_url != link or date_game >= datetime.now():
                 return
             scraper.driver.refresh()
-            time.sleep(4)
+            time.sleep(60)
             scraper.driver.get(link)
             continue
         except Exception:
