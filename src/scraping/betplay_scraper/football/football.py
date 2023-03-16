@@ -62,7 +62,6 @@ def read_links(link: str, engine:Engine):
     event_id = link.split("/")[-1]
     with get_session(engine) as s:
         res = s.query(Football.id).where(Football.id_evento == event_id).first()
-        print(res)
         if not res:
             return
     scraper = Scraper(link, NAME_DATA_BASE)
