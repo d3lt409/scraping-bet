@@ -6,10 +6,10 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
 
 from multiprocessing.pool import ThreadPool
-from datetime import datetime, timedelta, timezone
-from sqlalchemy import Engine
+from datetime import datetime
+from sqlalchemy import Engine, text
 from sqlalchemy.exc import IntegrityError
-from functools import partial
+from db.db import Football, get_session
 
 from models.scraper import Scraper
 from scraping.betplay_scraper.football.constants import *
@@ -59,11 +59,15 @@ def get_links_games():
 
 
 def read_links(link: str, engine:Engine):
-    scraper = Scraper(link, NAME_DATA_BASE)
-    scraper.driver.implicitly_wait(1)
-    scraper.driver.get(link)
     event_id = link.split("/")[-1]
-
+    with get_session(engine) as s:
+        res = s.query(Football.id).where(Football.id_evento == event_id).first()
+        print(res)
+        if not res:
+            return
+    scraper = Scraper(link, NAME_DATA_BASE)
+    scraper.driver.implicitly_wait(1)    
+    scraper.driver.get(link)
     try:
         event_game = "-".join([val.text for val in scraper.elements_wait_searh(
             TIME, By.XPATH, XPATH_EVENT_GAME)[1:]])
