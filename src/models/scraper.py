@@ -44,7 +44,7 @@ class Scraper():
         chrome_options = Options()
         if headless:
             chrome_options.add_argument('--headless')
-        chrome_options.add_argument("--disable-gpu")
+            chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
         chrome_options.add_argument("--disable-extensions")
@@ -54,7 +54,7 @@ class Scraper():
                                                             'automatic_downloads': 2, 'midi_sysex': 2, 'push_messaging': 2, 'ssl_cert_decisions': 2, 'metro_switch_to_desktop': 2,
                                                             'protected_media_identifier': 2, 'app_banner': 2, 'site_engagement': 2, 'durable_storage': 2}}
         chrome_options.add_experimental_option("prefs", prefs)
-        chrome_options.add_argument("--log-level=3")
+        chrome_options.add_argument("--silent")
 
     def init_page(self):
         while not internet_on(): continue

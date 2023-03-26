@@ -1,3 +1,4 @@
+from copy import deepcopy
 import time
 import traceback
 import sys
@@ -13,7 +14,6 @@ from sqlalchemy.exc import IntegrityError
 from models.scraper import Scraper
 from scraping.betplay_scraper.tennis.constants import *
 
-from functools import partial, reduce
 
 
 links = []
@@ -22,9 +22,8 @@ links_done = []
 def get_links_games():
     global links, links_done
     try:
-        
-        engine_scraper.element_wait_searh(TIME, By.XPATH, BUTTON_GAMES).click()
-        time.sleep(1)
+        time.sleep(3)
+        engine_scraper.element_click_wait_searh(TIME, By.XPATH, BUTTON_GAMES).click()
         try:
             for el in engine_scraper.elements_wait_searh(4, By.XPATH, XPATH_DROPDWN_LIST_GAMES): el.click()
         except TimeoutException: pass
@@ -32,17 +31,17 @@ def get_links_games():
         links = links + \
             [val.get_attribute("href") for val in engine_scraper.elements_wait_searh(
                 TIME, By.XPATH, XPATH_GAMES)]
-        if len(links_done) == 0:
-            with open("src/assets/links.txt", "w") as fp:
-                fp.writelines(map(lambda x: f"{x}\n", links))
-            return
-        print(links, links_done)
-        for i in range(len(links)):
-            if links[i] in links_done:
-                del links[i]
+        links = list(set(links))
+        links_done = list(set(links_done))
+        if len(links_done) == 0: return
+        for link in deepcopy(links):
+            if link in links_done:
+                links.remove(link)
+        
 
     except Exception as e:
-        print(e.with_traceback(e.__traceback__))
+        exp = sys.exc_info()
+        traceback.print_exception(*exp)
 
 def try_catch_elements(scraper:Scraper, time,value):
     try:
@@ -69,10 +68,10 @@ def read_links(link: str, engine:Engine):
         return data
     time.sleep(2)
     tries = 0
-    while True:
+    while scraper.driver.current_url == link:
         try:
-            scraper.element_wait_searh(2, By.XPATH, XPATH_GAME_OFFERS)
-            if tries >= 2: 
+            scraper.element_wait_searh(3, By.XPATH, XPATH_GAME_OFFERS)
+            if tries > 2: 
                 print(f"salio del partido {event_id}, {event_game}")
                 scraper.close()
                 return
@@ -146,13 +145,14 @@ def read_links(link: str, engine:Engine):
 
 
 def main(engine:Engine):
-    global links, engine_scraper
+    global links, engine_scraper, links_done
 
     engine_scraper = Scraper(PAGE_URL)
-    pool = ThreadPool(3)
+    pool = ThreadPool()
     response = []
     get_links_games()
     timeout = time.time() + 60*60*8
+    wait = time.time()+60
     while time.time() <= timeout:
         if len(links) != 0:
             link = links.pop()
@@ -162,10 +162,10 @@ def main(engine:Engine):
         else:
             for res in response: pool.apply_async(res.get)
             response = []
-            time.sleep(10)
-            engine_scraper.driver.get(PAGE_URL)
-            time.sleep(5)
-            pool.apply(get_links_games,())
+            if time.time() >= wait:
+                wait = time.time() + 60
+                engine_scraper.driver.get(PAGE_URL)
+                pool.apply(get_links_games(),())
 
     pool.close()
     pool.join()
