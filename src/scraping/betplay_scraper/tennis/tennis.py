@@ -25,7 +25,7 @@ def get_links_games():
         time.sleep(3)
         engine_scraper.element_click_wait_searh(TIME, By.XPATH, BUTTON_GAMES).click()
         try:
-            for el in engine_scraper.elements_wait_searh(4, By.XPATH, XPATH_DROPDWN_LIST_GAMES): el.click()
+            for el in engine_scraper.elements_wait_searh(4, By.XPATH, XPATH_DROPDWN_LIST_GAMES): engine_scraper.click(el)
         except TimeoutException: pass
         
         links = links + \
@@ -165,7 +165,7 @@ def main(engine:Engine):
             if time.time() >= wait:
                 wait = time.time() + 60
                 engine_scraper.driver.get(PAGE_URL)
-                pool.apply(get_links_games(),())
+                pool.apply(get_links_games,())
 
     pool.close()
     pool.join()
